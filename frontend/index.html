@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Test Data Generator for Edge Cases</title>
+    <style>
+      :root {
+        --ink: #17233c;
+        --mut: #68779a;
+        --blue: #2563eb;
+        --blue-2: #60a5fa;
+        --blue-pale: #eef5ff;
+        --bg: #f7faff;
+        --card: #ffffff;
+        --line: #dbe6f6;
+        --ok: #087f5b;
+        --bad: #dc2626;
+        --warn: #b45309;
+        --shadow: 0 12px 32px rgba(37, 99, 235, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          linear-gradient(180deg, #eef5ff 0, var(--bg) 240px);
+        color: var(--ink);
+        font: 15px/1.55 Inter, system-ui, "Segoe UI", sans-serif;
+      }
+      header {
+        background: linear-gradient(120deg, #1d4ed8 0%, #2563eb 55%, #60a5fa 100%);
+        color: #fff;
+        padding: 28px 28px 38px;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.16);
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 34px);
+        letter-spacing: -0.03em;
+      }
+      header p {
+        margin: 6px 0 0;
+        color: #eaf2ff;
+        max-width: 700px;
+      }
+      main {
+        max-width: 1180px;
+        margin: 20px auto 40px;
+        padding: 0 18px;
+        display: grid;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      h2 {
+        margin: 0 0 14px;
+        font-size: 17px;
+        color: #1e3a8a;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      input,
+      select,
+      button,
+      textarea {
+        font: inherit;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 8px 10px;
+        transition: border-color .15s, box-shadow .15s, transform .15s;
+      }
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+      }
+      input[type="number"] {
+        width: 84px;
+      }
+      input.name {
+        width: 140px;
+      }
+      input.desc {
+        width: 230px;
+      }
+      button {
+        cursor: pointer;
+        font-weight: 600;
+        background: #fff;
+        color: #1e40af;
+        border-color: #cbdcf7;
+      }
+      button:hover:not(:disabled) { transform: translateY(-1px); }
+      button.pri {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #fff;
+        box-shadow: 0 7px 16px rgba(37, 99, 235, .22);
+      }
+      button:disabled {
+        opacity: 0.5;
+      }
+      .fields {
+        display: grid;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      .f {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--blue-pale);
+      }
+      .f input.name { width: 150px; }
+      .f select { width: 118px; }
+      .f input[type="number"] { width: 90px; }
+      .f input.desc { width: 220px; }
+      @media (max-width: 920px) {
+        .f input.name,
+        .f input.desc,
+        .f select { width: calc(50% - 4px); }
+        .f input[type="number"] { width: calc(33.333% - 6px); }
+      }
+      @media (max-width: 560px) {
+        main { padding: 0 10px; }
+        .f input.name,
+        .f input.desc,
+        .f select,
+        .f input[type="number"] { width: 100%; }
+        .f label { width: 100%; }
+      }
+      .tag {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid;
+        background: #fff;
+      }
+      .valid {
+        color: var(--ok);
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+      }
+      .invalid {
+        color: var(--bad);
+        background: #fef2f2;
+        border-color: #fecaca;
+      }
+      .sanitise {
+        color: var(--warn);
+        background: #fffbeb;
+        border-color: #fde68a;
+      }
+      .stats {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .stat {
+        padding: 6px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font-weight: 600;
+        background: var(--blue-pale);
+        color: #1e40af;
+      }
+      .stat.valid { background: #ecfdf5; color: var(--ok); }
+      .stat.invalid { background: #fef2f2; color: var(--bad); }
+      .stat.sanitise { background: #fffbeb; color: var(--warn); }
+      .tw {
+        overflow: auto;
+        max-height: 520px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        white-space: nowrap;
+        max-width: 260px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        background: #edf4ff;
+        color: #1e40af;
+        border-bottom: 1px solid #cbdcf7;
+      }
+      .err {
+        color: var(--bad);
+        font-weight: 600;
+      }
+      .hint {
+        color: var(--mut);
+        font-size: 13px;
+      }
+      .demo-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 18px;
+        align-items: start;
+      }
+      .demo-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .demo-form label {
+        display: grid;
+        gap: 5px;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .demo-form input {
+        width: 100%;
+        height: 43px;
+      }
+      .demo-submit {
+        grid-column: 1 / -1;
+        height: 44px;
+        margin-top: 2px;
+      }
+      .demo-result {
+        min-height: 220px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #f8fbff;
+        padding: 16px;
+      }
+      .demo-result h3 {
+        margin: 0 0 10px;
+        color: #1e40af;
+        font-size: 15px;
+      }
+      .demo-result ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #475569;
+        font-size: 13px;
+      }
+      .demo-result li + li { margin-top: 7px; }
+      .result-success,
+      .result-error {
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+        font-weight: 800;
+      }
+      .result-success {
+        background: #ecfdf5;
+        color: var(--ok);
+        border: 1px solid #a7f3d0;
+      }
+      .result-error {
+        background: #fef2f2;
+        color: var(--bad);
+        border: 1px solid #fecaca;
+      }
+      .try-button {
+        padding: 4px 8px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      @media (max-width: 760px) {
+        .demo-layout { grid-template-columns: 1fr; }
+        .demo-form { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI Test Data Generator for Edge Cases</h1>
+      <p>
+        Describe your form or table fields. Get boundary, invalid and malicious
+        test values, ready to export.
+      </p>
+    </header>
+    <main>
+      <section class="card">
+        <h2>1. Describe your fields</h2>
+        <div class="row">
+          <span class="hint">Presets:</span
+          ><button data-p="signup">User signup</button
+          ><button data-p="product">Product</button
+          ><button data-p="order">Order</button>
+        </div>
+        <div class="fields" id="fields"></div>
+        <div class="row">
+          <button id="add">+ Add field</button>
+          <label
+            >Valid rows
+            <input type="number" id="valid" value="3" min="0" max="50"
+          /></label>
+          <label
+            >Seed <input type="number" id="seed" placeholder="random"
+          /></label>
+          <label
+            >Table <input id="table" value="test_data" style="width: 120px"
+          /></label>
+          <label
+            ><input type="checkbox" id="ai" /> Add AI-suggested cases (needs a
+            Groq key and a description)</label
+          >
+          <button class="pri" id="go">Generate edge cases</button>
+        </div>
+        <p class="hint">
+          Each test row keeps every field valid except one, so a failure points
+          to one field. Min, max and length apply to numbers and text.
+        </p>
+        <p class="err" id="err"></p>
+      </section>
+      <section class="card" id="out" hidden>
+        <h2>2. Test data</h2>
+        <div class="stats" id="stats"></div>
+        <div class="row" style="margin: 10px 0">
+          <label
+            >Show
+            <select id="filter">
+              <option value="">all</option>
+              <option>valid</option>
+              <option>invalid</option>
+              <option>sanitise</option>
+            </select></label
+          >
+          <button data-dl="json">Download JSON</button
+          ><button data-dl="csv">Download CSV</button
+          ><button data-dl="sql">Download SQL</button>
+        </div>
+        <div class="tw"><table id="tbl"></table></div>
+      </section>
+      <section class="card" id="demo">
+        <h2>3. Try the test data in a sample signup form</h2>
+        <div class="demo-layout">
+          <form class="demo-form" id="demo-form" novalidate>
+            <label>
+              Username
+              <input id="demo-username" name="username" autocomplete="username" placeholder="Enter username">
+            </label>
+            <label>
+              Email
+              <input id="demo-email" name="email" type="text" autocomplete="email" placeholder="you@example.com">
+            </label>
+            <label>
+              Age
+              <input id="demo-age" name="age" type="text" inputmode="numeric" placeholder="18">
+            </label>
+            <label>
+              Phone
+              <input id="demo-phone" name="phone" type="text" autocomplete="tel" placeholder="Optional">
+            </label>
+            <label>
+              Birth date
+              <input id="demo-date" name="birth_date" type="text" placeholder="YYYY-MM-DD">
+            </label>
+            <label>
+              Password
+              <input id="demo-password" name="password" type="password" autocomplete="new-password" value="ValidPass123!" placeholder="At least 8 characters">
+            </label>
+            <button class="pri demo-submit" type="submit">Check signup</button>
+          </form>
+          <aside class="demo-result" id="demo-result" aria-live="polite">
+            <h3>Test result</h3>
+            <ul>
+              <li>Generate data, then use <strong>Try</strong> beside a row.</li>
+              <li>Valid rows should create an account.</li>
+              <li>Invalid rows should show field-specific errors.</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const TYPES = [
+        "string",
+        "integer",
+        "float",
+        "email",
+        "phone",
+        "date",
+        "boolean",
+        "url",
+      ];
+      const PRESETS = {
+        signup: [
+          {
+            name: "username",
+            type: "string",
+            max_length: 20,
+            description: "Public display name",
+          },
+          { name: "email", type: "email" },
+          { name: "age", type: "integer", min: 18, max: 99 },
+          { name: "phone", type: "phone", required: false },
+          { name: "birth_date", type: "date" },
+        ],
+        product: [
+          { name: "title", type: "string", max_length: 80 },
+          { name: "price", type: "float", min: 0.01, max: 100000 },
+          { name: "stock", type: "integer", min: 0, max: 10000 },
+          { name: "url", type: "url", required: false },
+        ],
+        order: [
+          { name: "customer_email", type: "email" },
+          { name: "quantity", type: "integer", min: 1, max: 100 },
+          { name: "discount", type: "float", min: 0, max: 1 },
+          { name: "order_date", type: "date" },
+          { name: "gift", type: "boolean", required: false },
+        ],
+      };
+      let fields = JSON.parse(JSON.stringify(PRESETS.signup)),
+        last = null;
+      const num = (v) => (v === "" || v == null ? null : Number(v));
+      const escapeHtml = (v) =>
+        String(v ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      function draw() {
+        $("#fields").innerHTML = fields
+          .map(
+            (f, i) => `<div class="f">
+  <input class="name" data-i="${i}" data-k="name" value="${escapeHtml(f.name)}" placeholder="field name" aria-label="Field name">
+  <select data-i="${i}" data-k="type" aria-label="Type">${TYPES.map((t) => `<option ${t == f.type ? "selected" : ""}>${t}</option>`).join("")}</select>
+  <label><input type="checkbox" data-i="${i}" data-k="required" ${f.required === false ? "" : "checked"}> required</label>
+  <input type="number" step="any" data-i="${i}" data-k="min" value="${f.min ?? ""}" placeholder="min" aria-label="Minimum">
+  <input type="number" step="any" data-i="${i}" data-k="max" value="${f.max ?? ""}" placeholder="max" aria-label="Maximum">
+  <input type="number" data-i="${i}" data-k="max_length" value="${f.max_length ?? ""}" placeholder="max length" aria-label="Max length">
+  <input class="desc" data-i="${i}" data-k="description" value="${escapeHtml(f.description)}" placeholder="description (for AI)" aria-label="Description">
+  <button data-del="${i}" aria-label="Remove field">Remove</button></div>`,
+          )
+          .join("");
+      }
+      $("#fields").addEventListener("input", (e) => {
+        const t = e.target,
+          i = t.dataset.i;
+        if (i == null) return;
+        const k = t.dataset.k;
+        fields[i][k] =
+          t.type == "checkbox"
+            ? t.checked
+            : ["min", "max", "max_length"].includes(k)
+              ? num(t.value)
+              : t.value;
+      });
+      $("#fields").addEventListener("change", (e) => {
+        const t = e.target;
+        if (t.tagName === "SELECT" && t.dataset.i != null) {
+          fields[+t.dataset.i][t.dataset.k] = t.value;
+        }
+      });
+      $("#fields").addEventListener("click", (e) => {
+        if (e.target.dataset.del != null) {
+          fields.splice(e.target.dataset.del, 1);
+          draw();
+        }
+      });
+      $("#add").onclick = () => {
+        fields.push({ name: "", type: "string" });
+        draw();
+      };
+      document.querySelectorAll("[data-p]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            fields = JSON.parse(JSON.stringify(PRESETS[b.dataset.p]));
+            draw();
+          }),
+      );
+      function show() {
+        const rows = last.rows.filter(
+          (r) => !$("#filter").value || r._expected == $("#filter").value,
+        );
+        const cols = ["Try", ...last.columns, "_case", "_expected"];
+        $("#tbl").innerHTML =
+          "<thead><tr>" +
+          cols.map((c) => `<th>${c}</th>`).join("") +
+          "</tr></thead><tbody>" +
+          rows
+            .map((r, rowIndex) =>
+                "<tr>" +
+                cols
+                  .map((c) => {
+                    if (c == "Try")
+                      return `<td><button class="try-button" type="button" data-row="${rowIndex}">Try</button></td>`;
+                    const v = r[c];
+                    const s = v === null ? "null" : String(v);
+                    return c == "_expected"
+                      ? `<td><span class="tag ${v}">${v}</span></td>`
+                      : `<td title="${s.slice(0, 200).replace(/"/g, "&quot;")}">${s.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</td>`;
+                  })
+                  .join("") +
+                "</tr>",
+            )
+            .join("") +
+          "</tbody>";
+      }
+      $("#filter").onchange = show;
+      $("#tbl").addEventListener("click", (e) => {
+        const button = e.target.closest("[data-row]");
+        if (!button || !last) return;
+        const value = $("#filter").value;
+        const rows = last.rows.filter((r) => !value || r._expected == value);
+        const row = rows[+button.dataset.row];
+        if (!row) return;
+        $("#demo-username").value = row.username == null ? "" : String(row.username);
+        $("#demo-email").value = row.email == null ? "" : String(row.email);
+        $("#demo-age").value = row.age == null ? "" : String(row.age);
+        $("#demo-phone").value = row.phone == null ? "" : String(row.phone);
+        $("#demo-date").value = row.birth_date == null ? "" : String(row.birth_date);
+        $("#demo-result").innerHTML =
+          "<h3>Row loaded</h3>" +
+          `<div class="result-${row._expected == "valid" ? "success" : "error"}">` +
+          `${escapeHtml(row._case)}</div>` +
+          `<ul><li>Expected: <strong>${escapeHtml(row._expected)}</strong></li>` +
+          "<li>Now click <strong>Check signup</strong> to validate it.</li></ul>";
+        $("#demo").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      function isRealDate(value) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+        const date = new Date(`${value}T00:00:00Z`);
+        return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) == value;
+      }
+      $("#demo-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const username = $("#demo-username").value.trim();
+        const email = $("#demo-email").value.trim();
+        const age = $("#demo-age").value.trim();
+        const phone = $("#demo-phone").value.trim();
+        const date = $("#demo-date").value.trim();
+        const password = $("#demo-password").value;
+        const errors = [];
+        if (!username) errors.push("Username is required");
+        else if (username.length > 20) errors.push("Username must be 20 characters or fewer");
+        if (!email) errors.push("Email is required");
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Email format is invalid");
+        if (!/^\d+$/.test(age) || Number(age) < 18 || Number(age) > 99)
+          errors.push("Age must be a whole number from 18 to 99");
+        if (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone))
+          errors.push("Phone format is invalid");
+        if (!isRealDate(date)) errors.push("Birth date must be a valid YYYY-MM-DD date");
+        if (password.length < 8) errors.push("Password must be at least 8 characters");
+        const result = $("#demo-result");
+        if (errors.length) {
+          result.innerHTML =
+            "<h3>Test result</h3><div class=\"result-error\">Signup rejected as expected</div>" +
+            "<ul>" + errors.map((error) => `<li>${escapeHtml(error)}</li>`).join("") + "</ul>";
+        } else {
+          result.innerHTML =
+            "<h3>Test result</h3><div class=\"result-success\">Signup accepted</div>" +
+            "<ul><li>All fields passed the sample signup rules.</li>" +
+            "<li>No data was sent to a server.</li></ul>";
+        }
+      });
+      $("#go").onclick = async () => {
+        $("#err").textContent = "";
+        $("#go").disabled = true;
+        $("#go").textContent = "Generating...";
+        try {
+          const apiUrl =
+            window.location.protocol === "file:"
+              ? "http://127.0.0.1:8000/api/generate"
+              : "/api/generate";
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fields: fields.map((f) => ({
+                ...f,
+                description: f.description || "",
+                required: f.required !== false,
+              })),
+              valid_rows: +$("#valid").value || 0,
+              seed: num($("#seed").value),
+              table: $("#table").value || "test_data",
+              use_ai: $("#ai").checked,
+            }),
+          });
+          const responseText = await res.text();
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error(
+              `The server returned HTML instead of JSON (${res.status}). Restart the app with uvicorn, then refresh this page.`,
+            );
+          }
+          if (!res.ok)
+            throw new Error(
+              typeof data.detail == "string"
+                ? data.detail
+                : (data.detail || [])
+                    .map((d) => (d.loc || []).slice(1).join(".") + ": " + d.msg)
+                    .join("; "),
+            );
+          last = data;
+          $("#out").hidden = false;
+          $("#stats").innerHTML =
+            `<span class="stat">${data.total} rows</span>` +
+            Object.entries(data.summary)
+              .map(([k, v]) => `<span class="stat ${k}">${v} ${k}</span>`)
+              .join("") +
+            ($("#ai").checked
+              ? `<span class="stat">${data.ai_used ? "AI cases added" : "No AI cases (check key and descriptions)"}</span>`
+              : "");
+          show();
+        } catch (e) {
+          $("#err").textContent =
+            e instanceof TypeError
+              ? "Cannot reach the API. Start the backend at http://127.0.0.1:8000 and refresh."
+              : e.message;
+        } finally {
+          $("#go").disabled = false;
+          $("#go").textContent = "Generate edge cases";
+        }
+      };
+      document.querySelectorAll("[data-dl]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            if (!last) return;
+            const k = b.dataset.dl;
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(
+              new Blob([last.exports[k]], { type: "text/plain" }),
+            );
+            a.download = "edge-case-data." + k;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          }),
+      );
+      draw();
+    </script>
+  </body>
+</html>
